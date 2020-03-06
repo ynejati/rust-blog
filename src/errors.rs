@@ -43,3 +43,27 @@ impl From<BlockingError<AppError>> for AppError {
     }
   }
 }
+
+// JSON error response
+#[derive(Debug, Serialize)]
+struct ErrorResponse {
+  err: String,
+}
+
+// Specify how we'd like the type inside Err variant of Result as a response
+impl actix_web::ResponseError for AppError {
+  fn error_response(&self) -> HttpResponse {
+    let err = format!("{}", self);
+    let mut builder = match self {
+      AppError::RecordAlreadyExists => HttpResponse::BadRequest(),
+      AppError::RecordNotFound => HttpResponse::NotFound(),
+      _ => HttpResponse::InternalServerError(),
+    };
+
+    builder.json(ErrorResponse { err })
+  }
+
+  fn render_response()(&self) -> HttpResponse {
+    self.error_response()
+  }
+}
